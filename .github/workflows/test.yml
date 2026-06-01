@@ -1,0 +1,41 @@
+name: CI
+
+permissions: {}
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  check:
+    name: Foundry project
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Show Forge version
+        run: forge --version
+
+      # NOTE: `forge fmt --check` is intentionally NOT run.
+      # src/CakeToken.sol must stay byte-identical to the verified source on
+      # BscScan (0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82), so the file is
+      # excluded from `forge fmt` via foundry.toml and we do not enforce
+      # formatting in CI. See README.md.
+
+      - name: Run Forge build
+        run: forge build --sizes
+
+      - name: Run Forge tests
+        run: forge test -vvv
